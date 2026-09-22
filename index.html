@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Environmental & Power Monitoring Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#0f172a',
+                        cardbg: '#1e293b',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-darkbg text-slate-100 min-h-screen p-4 md:p-8 font-sans">
+
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-slate-700 pb-4 gap-4">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold text-cyan-400 flex items-center gap-3">
+                    <i class="fa-solid fa-[#microchip]"></i> Smart IoT Monitoring Dashboard
+                </h1>
+                <p class="text-slate-400 text-sm mt-1">Firebase Realtime Database Integration (Node: <span id="db-node" class="text-yellow-400">iot-999</span>)</p>
+            </div>
+            <div class="flex items-center gap-3 bg-slate-800 px-4 py-2 rounded-full border border-slate-700">
+                <span class="relative flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                </span>
+                <span class="text-xs font-semibold text-emerald-400" id="status-text">Realtime Live</span>
+                <span class="text-slate-500">|</span>
+                <span class="text-xs text-slate-400" id="last-update">Updating...</span>
+            </div>
+        </header>
+
+        <!-- 6 Sensor Cards Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <!-- 1. Temperature -->
+            <div class="bg-cardbg p-6 rounded-2xl border border-slate-700/60 shadow-lg hover:border-cyan-500/50 transition">
+                <div class="flex justify-between items-center text-slate-400 mb-2">
+                    <span class="text-sm font-medium">Temperature</span>
+                    <i class="fa-solid fa-temperature-high text-rose-400 text-xl"></i>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-4xl font-extrabold text-white" id="val-temp">--</span>
+                    <span class="text-slate-400 font-semibold">°C</span>
+                </div>
+            </div>
+
+            <!-- 2. Humidity -->
+            <div class="bg-cardbg p-6 rounded-2xl border border-slate-700/60 shadow-lg hover:border-cyan-500/50 transition">
+                <div class="flex justify-between items-center text-slate-400 mb-2">
+                    <span class="text-sm font-medium">Humidity</span>
+                    <i class="fa-solid fa-droplet text-blue-400 text-xl"></i>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-4xl font-extrabold text-white" id="val-humi">--</span>
+                    <span class="text-slate-400 font-semibold">%</span>
+                </div>
+            </div>
+
+            <!-- 3. Light -->
+            <div class="bg-cardbg p-6 rounded-2xl border border-slate-700/60 shadow-lg hover:border-cyan-500/50 transition">
+                <div class="flex justify-between items-center text-slate-400 mb-2">
+                    <span class="text-sm font-medium">Light Intensity</span>
+                    <i class="fa-solid fa-sun text-amber-400 text-xl"></i>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-4xl font-extrabold text-white" id="val-light">--</span>
+                    <span class="text-slate-400 font-semibold">lx</span>
+                </div>
+            </div>
+
+            <!-- 4. PM2.5 -->
+            <div class="bg-cardbg p-6 rounded-2xl border border-slate-700/60 shadow-lg hover:border-cyan-500/50 transition">
+                <div class="flex justify-between items-center text-slate-400 mb-2">
+                    <span class="text-sm font-medium">PM2.5 Dust</span>
+                    <i class="fa-solid fa-smog text-emerald-400 text-xl"></i>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-4xl font-extrabold text-white" id="val-pm25">--</span>
+                    <span class="text-slate-400 font-semibold">µg/m³</span>
+                </div>
+            </div>
+
+            <!-- 5. CO2 -->
+            <div class="bg-cardbg p-6 rounded-2xl border border-slate-700/60 shadow-lg hover:border-cyan-500/50 transition">
+                <div class="flex justify-between items-center text-slate-400 mb-2">
+                    <span class="text-sm font-medium">CO2 Concentration</span>
+                    <i class="fa-solid fa-cloud text-purple-400 text-xl"></i>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-4xl font-extrabold text-white" id="val-co2">--</span>
+                    <span class="text-slate-400 font-semibold">ppm</span>
+                </div>
+            </div>
+
+            <!-- 6. Voltage -->
+            <div class="bg-cardbg p-6 rounded-2xl border border-slate-700/60 shadow-lg hover:border-cyan-500/50 transition">
+                <div class="flex justify-between items-center text-slate-400 mb-2">
+                    <span class="text-sm font-medium">AC Voltage</span>
+                    <i class="fa-solid fa-bolt text-yellow-400 text-xl"></i>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-4xl font-extrabold text-white" id="val-voltage">--</span>
+                    <span class="text-slate-400 font-semibold">V</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Chart Section -->
+        <div class="bg-cardbg p-6 rounded-2xl border border-slate-700/60 shadow-lg">
+            <h2 class="text-lg font-bold text-slate-200 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-chart-line text-cyan-400"></i> Realtime Sensor Trends (History)
+            </h2>
+            <div class="h-80 w-full">
+                <canvas id="realtimeChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Section -->
+    <script>
+        // *** หมายเหตุ: เปลี่ยน DB_NAME ให้ตรงกับรหัสของตนเอง ***
+        const DB_NAME = "iot-999"; 
+        const FIREBASE_BASE_URL = `https://${DB_NAME}-default-rtdb.asia-southeast1.firebasedatabase.app/${DB_NAME}`;
+
+        document.getElementById('db-node').innerText = DB_NAME;
+
+        // Chart.js Configuration
+        const ctx = document.getElementById('realtimeChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'Temp (°C)', borderColor: '#f43f5e', data: [], fill: false, tension: 0.3 },
+                    { label: 'Humi (%)', borderColor: '#3b82f6', data: [], fill: false, tension: 0.3 },
+                    { label: 'PM2.5 (µg/m³)', borderColor: '#10b981', data: [], fill: false, tension: 0.3 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                    y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+                },
+                plugins: {
+                    legend: { labels: { color: '#f8fafc' } }
+                }
+            }
+        });
+
+        // ดึงข้อมูล Latest
+        async function fetchLatestData() {
+            try {
+                const res = await fetch(`${FIREBASE_BASE_URL}/latest.json`);
+                const data = await res.json();
+                if (data) {
+                    document.getElementById('val-temp').innerText = data.temp !== undefined ? data.temp.toFixed(1) : '--';
+                    document.getElementById('val-humi').innerText = data.humi !== undefined ? data.humi.toFixed(1) : '--';
+                    document.getElementById('val-light').innerText = data.light !== undefined ? data.light.toFixed(0) : '--';
+                    document.getElementById('val-pm25').innerText = data.pm25 !== undefined ? data.pm25.toFixed(1) : '--';
+                    document.getElementById('val-co2').innerText = data.co2 !== undefined ? data.co2.toFixed(0) : '--';
+                    document.getElementById('val-voltage').innerText = data.voltage !== undefined ? data.voltage.toFixed(1) : '--';
+
+                    if (data.timestamp) {
+                        const date = new Date(data.timestamp * 1000); // Unix timestamp วินาที -> มิลลิวินาที [3]
+                        document.getElementById('last-update').innerText = date.toLocaleTimeString('th-TH');
+                    }
+                }
+            } catch (err) {
+                console.error("Error fetching latest:", err);
+            }
+        }
+
+        // ดึงข้อมูล History สำหรับวาดกราฟ
+        async function fetchHistoryData() {
+            try {
+                const res = await fetch(`${FIREBASE_BASE_URL}/history.json?orderBy="$key"&limitToLast=12`);
+                const data = await res.json();
+                if (data) {
+                    const labels = [];
+                    const tempArr = [];
+                    const humiArr = [];
+                    const pm25Arr = [];
+
+                    Object.values(data).forEach(item => {
+                        const timeStr = item.timestamp ? new Date(item.timestamp * 1000).toLocaleTimeString('th-TH') : '';
+                        labels.push(timeStr);
+                        tempArr.push(item.temp);
+                        humiArr.push(item.humi);
+                        pm25Arr.push(item.pm25);
+                    });
+
+                    chart.data.labels = labels;
+                    chart.data.datasets.data = tempArr;
+                    chart.data.datasets[1].data = humiArr;
+                    chart.data.datasets[12].data = pm25Arr;
+                    chart.update();
+                }
+            } catch (err) {
+                console.error("Error fetching history:", err);
+            }
+        }
+
+        // อ่านข้อมูลเริ่มต้นและตั้ง Polling Realtime ทุกๆ 3 วินาที
+        function initDashboard() {
+            fetchLatestData();
+            fetchHistoryData();
+            setInterval(() => {
+                fetchLatestData();
+                fetchHistoryData();
+            }, 3000);
+        }
+
+        window.onload = initDashboard;
+    </script>
+</body>
+</html>
